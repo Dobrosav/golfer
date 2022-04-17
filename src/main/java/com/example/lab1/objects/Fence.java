@@ -1,10 +1,6 @@
 
 package com.example.lab1.objects;
-
-import javafx.scene.Node;
 import javafx.scene.transform.Translate;
-import javafx.scene.transform.Transform;
-import javafx.scene.paint.Paint;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.Group;

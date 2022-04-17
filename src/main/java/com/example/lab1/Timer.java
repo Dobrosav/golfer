@@ -20,6 +20,9 @@ public class Timer extends AnimationTimer
         }
         this.time = now;
     }
+    public long getTime(){
+        return time;
+    }
     
     public interface TimerSubscriber
     {

@@ -47,4 +47,8 @@ public class Status extends Group
         this.points ++;
         this.text.setText(Integer.toString(this.points));
     }
+    public void addPointsToss() {
+        this.points +=5;
+        this.text.setText(Integer.toString(this.points));
+    }
 }

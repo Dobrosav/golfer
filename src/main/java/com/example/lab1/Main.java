@@ -24,32 +24,8 @@ import javafx.event.EventHandler;
 import javafx.application.Application;
 
 public class Main extends Application implements EventHandler {
-    private static final double WINDOW_WIDTH = 600.0;
-    private static final double WINDOW_HEIGHT = 800.0;
-    private static final double PLAYER_WIDTH = 20.0;
-    private static final double PLAYER_HEIGHT = 80.0;
-    private static final double PLAYER_MAX_ANGLE_OFFSET = 60.0;
-    private static final double PLAYER_MIN_ANGLE_OFFSET = -60.0;
-    private static final double MS_IN_S = 1000.0;
-    private static final double NS_IN_S = 1.0E9;
-    private static final double MAXIMUM_HOLD_IN_S = 3.0;
-    private static final double MAXIMUM_BALL_SPEED = 1500.0;
-    private static final double BALL_RADIUS = 5.0;
-    private static final double BALL_DAMP_FACTOR = 0.995;
-    private static final double MIN_BALL_SPEED = 1.0;
-    private static final double HOLE_RADIUS = 15.0;
-    private static final double PROGRESS_BAR_WIDTH = 12.0;
-    private static final double OBSTACLE_WIDTH = 120.0;
-    private static final double OBSTACLE_HEIGHT = 16.0;
-    private static final double FENCE_WIDTH = 18.0;
-    private static final double SPEED_MODIFIER_WIDTH = 30.0;
-    private static final double MUD_DAMP_FACTOR = 0.9;
-    private static final double ICE_DAMP_FACTOR = 1.1;
-    private static final double MAXIMUM_HOLE_SPEED = 400.0;
-    private static final int NUMBER_OF_LIVES = 5;
-    private static final int HOLE_POINTS_MAXIMUM = 20;
-    private static final int HOLE_POINTS_MEDIUM = 10;
-    private static final int HOLE_POINTS_MINIMUM = 5;
+    public static final double WINDOW_WIDTH = 600.0;
+    public static final double WINDOW_HEIGHT = 800.0;
     private Group root;
     private Player player;
     private Ball ball;
@@ -62,10 +38,10 @@ public class Main extends Application implements EventHandler {
     private SpeedModifier[] icePatches;
     private Status status;
     private State state;
-
+    private Toss toss;
 
     private void addSpeedModifiers() {
-        final Translate mudPuddle0Position = new Translate(105.0, 105.0);
+        Translate mudPuddle0Position = new Translate(105.0, 105.0);
         final SpeedModifier mudPuddle0 = SpeedModifier.mud(30.0, 30.0, mudPuddle0Position);
         this.root.getChildren().addAll(mudPuddle0);
         final Translate icePatch0Position = new Translate(465.0, 105.0);
@@ -117,8 +93,8 @@ public class Main extends Application implements EventHandler {
         Image grassImage = new Image(this.getClass().getClassLoader().getResourceAsStream(SuperMain.parameters[0] + ".jpg"));
         final ImagePattern grass = new ImagePattern(grassImage);
         Scene scene = new Scene(this.root, WINDOW_WIDTH, WINDOW_HEIGHT, grass);
-        this.progressBar = new ProgressBar(12.0, 800.0);
-        this.root.getChildren().add(this.progressBar);
+        this.progressBar = new ProgressBar(10.0, 0);
+        this.root.getChildren().addAll(this.progressBar);
         final Image fenceImage = new Image(this.getClass().getClassLoader().getResourceAsStream("fences.jpg"));
         final ImagePattern fenceImagePattern = new ImagePattern(fenceImage);
         this.fence = new Fence(600.0, 800.0, 18.0, fenceImagePattern);
@@ -132,7 +108,7 @@ public class Main extends Application implements EventHandler {
                 break;
             case "top2":
                 bc = Color.GREEN;
-                cc = Color.TAN;
+                cc = Color.RED;
                 break;
             case "top3":
                 bc = Color.BLACK;
@@ -181,7 +157,7 @@ public class Main extends Application implements EventHandler {
                     this.ball = null;
                 }
                 if (this.ball==null)
-                    return;;
+                    return;
                 boolean stopped = this.ball.update(deltaSeconds, 18.0, 582.0, 18.0, 782.0, dampFactor, 1.0);
                 final Optional<Hole> optionalHole;optionalHole = Arrays.stream(this.holes).filter(hole -> hole.handleCollision(this.ball)).findFirst();
                 if (stopped) {
@@ -197,7 +173,29 @@ public class Main extends Application implements EventHandler {
         });
 
         timer.start();
-      //  scene.setCursor(Cursor.NONE);
+        Timer timer1=new Timer(delta->{
+                int deltaSeconds = (int) (delta / 1.0E3);
+                //    System.out.println(deltaSeconds);
+                if (deltaSeconds % 50 == 0 && toss == null) {
+                    toss = new Toss();
+                    this.root.getChildren().add(toss);
+                }
+                if (deltaSeconds % 1000 == 0) {
+                    this.root.getChildren().remove(toss);
+                    toss = null;
+                }
+                if (ball!=null &&toss!=null &&(this.ball.getCenterX() <= (toss.getCenterX() + toss.getRadius())) &&
+                        this.ball.getCenterX() > toss.getCenterX() &&
+                        this.ball.getCenterY() <= (toss.getRadius() + toss.getCenterY()) && ball.getCenterY() > toss.getCenterY()) {
+                    this.root.getChildren().remove(toss);
+                    System.out.println("poklopio se");
+                    toss = null;
+                    status.addPointsToss();
+                }
+            return;
+        });
+        timer1.start();
+         scene.setCursor(Cursor.NONE);
         stage.setTitle("Golfer");
         stage.setResizable(false);
         stage.setScene(scene);
@@ -256,6 +254,13 @@ public class Main extends Application implements EventHandler {
         private static Main.State[] $values() {
             return new Main.State[]{IDLE, PREPARATION, BALL_SHOT, FALLING};
         }
+    }
+
+    public static class SuperSuperMain {
+        public static void main(String[] arg){
+            SuperMain.main();
+        }
+
     }
 }
 

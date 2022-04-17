@@ -1,9 +1,8 @@
-/* Decompiler 21ms, total 224ms, lines 58 */
+
 package com.example.lab1.widgets;
 
 import com.example.lab1.Utilities;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
@@ -24,7 +23,7 @@ public class ProgressBar extends Group {
    }
 
    public void onClick() {
-      super.getChildren().addAll(new Node[]{this.progressBar});
+      super.getChildren().add(this.progressBar);
       this.scale.setY(0.0D);
       this.state = State.CLICKED;
       this.time = 0.0D;
@@ -33,7 +32,7 @@ public class ProgressBar extends Group {
    public void elapsed(long dns, double max) {
       if (this.state == State.CLICKED) {
          this.time += (double)dns;
-         double value = Utilities.clamp(this.time / max, 0.0D, 1.0D);
+         double value = Utilities.clamp(this.time / max, 0.0D, 2.0D);
          this.scale.setY(value);
       }
 
@@ -42,15 +41,12 @@ public class ProgressBar extends Group {
    public void onRelease() {
       super.getChildren().remove(this.progressBar);
       this.scale.setY(0.0D);
-      this.state = State.IDLE;
+      this.state = ProgressBar.State.IDLE;
       this.time = 0.0D;
    }
 
-   private enum State {
+   private  enum State {
       IDLE,
-      CLICKED;
-      private static State[] $values() {
-         return new State[]{IDLE, CLICKED};
-      }
+      CLICKED
    }
 }

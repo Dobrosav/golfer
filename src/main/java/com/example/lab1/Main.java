@@ -39,7 +39,7 @@ public class Main extends Application implements EventHandler {
     private Status status;
     private State state;
     private Toss toss;
-
+    private Teleport[] teleports;
     private void addSpeedModifiers() {
         Translate mudPuddle0Position = new Translate(105.0, 105.0);
         final SpeedModifier mudPuddle0 = SpeedModifier.mud(30.0, 30.0, mudPuddle0Position);
@@ -55,6 +55,15 @@ public class Main extends Application implements EventHandler {
         this.root.getChildren().addAll(icePatch2);
         this.mudPuddles = new SpeedModifier[]{mudPuddle0, mudPuddle2};
         this.icePatches = new SpeedModifier[]{icePatch0, icePatch2};
+    }
+    private void addTeleports(){
+        Teleport teleport= new Teleport(250,500);
+        Teleport teleport1= new Teleport(490,295);
+        this.root.getChildren().addAll(teleport,teleport1);
+        teleports=new Teleport[]{
+                teleport,
+                teleport1
+        };
     }
 
     private void addObstacles() {
@@ -119,6 +128,7 @@ public class Main extends Application implements EventHandler {
         this.addHoles();
         this.addObstacles();
         this.addSpeedModifiers();
+        addTeleports();
         this.status = new Status(5, 5.0, 600.0);
         this.root.getChildren().addAll(this.status);
         scene.addEventHandler(KeyEvent.KEY_PRESSED, (KeyEvent k)->{
@@ -136,11 +146,14 @@ public class Main extends Application implements EventHandler {
 
 
         Timer timer = new Timer(deltaNanoseconds -> {
-            final double deltaSeconds = deltaNanoseconds / 1.0E9;
-            if (this.ball==null)
+            if (ball==null)
                 return;
+            if (this.state == State.PREPARATION) {
+                this.progressBar.elapsed(deltaNanoseconds, 3.0E9);
+            }
+            final double deltaSeconds = deltaNanoseconds / 1.0E9;
             if (this.state == State.BALL_SHOT) {
-               final boolean collidedWithObstacle = Arrays.stream(this.obstacles).anyMatch(obstacle -> this.ball.handleCollision(obstacle.getBoundsInParent()));
+                final boolean collidedWithObstacle = Arrays.stream(this.obstacles).anyMatch(obstacle -> this.ball.handleCollision(obstacle.getBoundsInParent()));
                double dampFactor = 0.995;
                final boolean inMud = Arrays.stream(this.mudPuddles).anyMatch(mudPuddle -> mudPuddle.handleCollision(this.ball));
                 final boolean isOverIce = Arrays.stream(this.icePatches).anyMatch(icePatch -> icePatch.handleCollision(this.ball));
@@ -150,6 +163,8 @@ public class Main extends Application implements EventHandler {
                 else if (isOverIce) {
                     dampFactor = 1.1;
                 }
+                System.out.println(ball.getCenterX());
+                System.out.println(ball.getCenterY());
                 boolean isInHole = Arrays.stream(this.holes).anyMatch(hole -> hole.handleCollision(this.ball));
                 if (isInHole && this.ball.getSpeedMagnitude()<400)  {
                     status.addPoints();
@@ -166,9 +181,7 @@ public class Main extends Application implements EventHandler {
                     this.state = State.IDLE;
                 }
             }
-            else if (this.state == State.PREPARATION) {
-                this.progressBar.elapsed(deltaNanoseconds, 3.0E9);
-            }
+
             return;
         });
 
@@ -184,18 +197,26 @@ public class Main extends Application implements EventHandler {
                     this.root.getChildren().remove(toss);
                     toss = null;
                 }
-                if (ball!=null &&toss!=null &&(this.ball.getCenterX() <= (toss.getCenterX() + toss.getRadius())) &&
-                        this.ball.getCenterX() > toss.getCenterX() &&
-                        this.ball.getCenterY() <= (toss.getRadius() + toss.getCenterY()) && ball.getCenterY() > toss.getCenterY()) {
+                if (ball!=null &&toss!=null && toss.handleCollision(ball)) {
                     this.root.getChildren().remove(toss);
                     System.out.println("poklopio se");
                     toss = null;
                     status.addPointsToss();
                 }
+                if (ball!=null){
+                    if (teleports[0].handleCollision(ball)){
+                        Translate translate= new Translate(250,-250-teleports[1].getRadius()+1);
+                        ball.getTransforms().add(
+                                translate
+                        );
+
+                    }
+
+                }
             return;
         });
         timer1.start();
-         scene.setCursor(Cursor.NONE);
+//         scene.setCursor(Cursor.NONE);
         stage.setTitle("Golfer");
         stage.setResizable(false);
         stage.setScene(scene);
@@ -256,11 +277,5 @@ public class Main extends Application implements EventHandler {
         }
     }
 
-    public static class SuperSuperMain {
-        public static void main(String[] arg){
-            SuperMain.main();
-        }
-
-    }
 }
 

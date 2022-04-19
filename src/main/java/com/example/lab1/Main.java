@@ -13,9 +13,8 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.ImagePattern;
+import javafx.scene.paint.*;
 import javafx.stage.Stage;
-import javafx.scene.paint.Color;
 import javafx.scene.transform.Translate;
 import com.example.lab1.widgets.Status;
 import javafx.scene.Group;
@@ -40,6 +39,7 @@ public class Main extends Application implements EventHandler {
     private State state;
     private Toss toss;
     private Teleport[] teleports;
+    private FlightObject flightObject;
     private void addSpeedModifiers() {
         Translate mudPuddle0Position = new Translate(105.0, 105.0);
         final SpeedModifier mudPuddle0 = SpeedModifier.mud(30.0, 30.0, mudPuddle0Position);
@@ -80,19 +80,25 @@ public class Main extends Application implements EventHandler {
     }
 
     private void addHoles() {
+        Stop[] stops = { new Stop(0.0, Color.BLACK), new Stop(1.0, Color.BROWN) };
+        RadialGradient radialGradient = new RadialGradient(0.0, 0.0, 0.5, 0.5, 0.5, true, CycleMethod.NO_CYCLE, stops);
         final Translate hole0Position = new Translate(300.0, 80.0);
-        final Hole hole0 = new Hole(15.0, hole0Position, Color.DARKGOLDENROD, 20);
+        Hole hole0 = new Hole(15.0, hole0Position);
+        hole0.setFill(radialGradient);
         this.root.getChildren().addAll(hole0);
+        Stop[] stops1 = { new Stop(0.0, Color.BLACK), new Stop(1.0, Color.GREEN) };
+        RadialGradient radialGradient1 = new RadialGradient(0.0, 0.0, 0.5, 0.5, 0.5, true, CycleMethod.NO_CYCLE, stops1);
         final Translate hole1Position = new Translate(300.0, 320.0);
-        final Hole hole2 = new Hole(15.0, hole1Position, Color.LIGHTGREEN, 5);
+        Hole hole1 = new Hole(15.0, hole1Position);
+        hole1.setFill(radialGradient1);
+        this.root.getChildren().addAll(hole1);
+        Translate hole2Position = new Translate(200.0, 200.0);
+        Hole hole2 = new Hole(15.0, hole2Position);
         this.root.getChildren().addAll(hole2);
-        final Translate hole2Position = new Translate(200.0, 200.0);
-        final Hole hole3 = new Hole(15.0, hole2Position, Color.YELLOW, 10);
+        Translate hole3Position = new Translate(400.0, 200.0);
+        Hole hole3 = new Hole(15.0, hole3Position);
         this.root.getChildren().addAll(hole3);
-        final Translate hole3Position = new Translate(400.0, 200.0);
-        final Hole hole4 = new Hole(15.0, hole3Position, Color.YELLOW, 10);
-        this.root.getChildren().addAll(hole4);
-        this.holes = new Hole[]{hole0, hole2, hole3, hole4};
+        this.holes = new Hole[]{hole0, hole1, hole2, hole3};
     }
 
     @Override
@@ -163,11 +169,14 @@ public class Main extends Application implements EventHandler {
                 else if (isOverIce) {
                     dampFactor = 1.1;
                 }
-                System.out.println(ball.getCenterX());
-                System.out.println(ball.getCenterY());
                 boolean isInHole = Arrays.stream(this.holes).anyMatch(hole -> hole.handleCollision(this.ball));
                 if (isInHole && this.ball.getSpeedMagnitude()<400)  {
-                    status.addPoints();
+                    if (this.holes[0].handleCollision(ball))
+                        this.status.addPoints(20);
+                    else if (this.holes[1].handleCollision(ball))
+                        this.status.addPoints(5);
+                    else
+                        this.status.addPoints(10);
                     this.root.getChildren().remove(this.ball);
                     this.ball = null;
                 }
@@ -181,10 +190,9 @@ public class Main extends Application implements EventHandler {
                     this.state = State.IDLE;
                 }
             }
-
             return;
         });
-
+        boolean turn=true;
         timer.start();
         Timer timer1=new Timer(delta->{
                 int deltaSeconds = (int) (delta / 1.0E3);
@@ -203,20 +211,37 @@ public class Main extends Application implements EventHandler {
                     toss = null;
                     status.addPointsToss();
                 }
-                if (ball!=null){
-                    if (teleports[0].handleCollision(ball)){
-                        Translate translate= new Translate(250,-250-teleports[1].getRadius()+1);
+                if (ball!=null) {
+                    if (teleports[0].handleCollision(ball)) {
+                        Translate translate = new Translate(250, -250 - teleports[1].getRadius() + 1);
                         ball.getTransforms().add(
                                 translate
                         );
-
                     }
-
+                }
+                if (flightObject==null){
+                    flightObject=new FlightObject();
+                    this.root.getChildren().add(flightObject);
+                }
+                else{
+                    if (flightObject.getCenterX()+flightObject.getRadius()<WINDOW_WIDTH-20)
+                        flightObject.setCenterX(flightObject.getCenterX()+0.2);
+                    else {
+                        root.getChildren().remove(flightObject);
+                        flightObject=null;
+                    }
+                }
+                if (flightObject!=null && ball!=null) {
+                    boolean iscolided = flightObject.handleCollision(ball);
+                    if (iscolided){
+                        root.getChildren().remove(ball);
+                        ball=null;
+                    }
                 }
             return;
         });
         timer1.start();
-//         scene.setCursor(Cursor.NONE);
+        scene.setCursor(Cursor.NONE);
         stage.setTitle("Golfer");
         stage.setResizable(false);
         stage.setScene(scene);

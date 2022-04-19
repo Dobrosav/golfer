@@ -43,8 +43,8 @@ public class Status extends Group
         this.getChildren().remove(this.lives[this.numberOfLives]);
     }
     
-    public void addPoints() {
-        this.points ++;
+    public void addPoints(int points) {
+        this.points +=points;
         this.text.setText(Integer.toString(this.points));
     }
     public void addPointsToss() {
